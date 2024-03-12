@@ -10,229 +10,21 @@ library(pandoc)
 library(rjson)  
 library(shinyFiles)
 library(zip)
-
-calcKernelVol <- function(fhat, perc) { # Calculates perc% kernel volume
-  ct <- contourLevels(fhat, cont=perc, approx=TRUE)
-  vol.voxel <- prod(sapply(fhat$eval.points, diff)[1,]) # Calculate volume of single voxel
-  no.voxel <- sum(fhat$estimate>ct) # Calculate number of voxels
-  vol <- no.voxel*vol.voxel # Calculate total volume as product
-  return(vol) }
-
-calcIntersect <- function(fhat1, fhat2, perc) { # Calculates volume of intersection of perc% volumes
-  ct1 <- contourLevels(fhat1, cont=perc, approx=TRUE) 
-  ct2 <- contourLevels(fhat2, cont=perc, approx=TRUE) 
-  vol.voxel <- prod(sapply(fhat1$eval.points, diff)[1,]) 
-  no.voxel <- sum(fhat1$estimate>ct1 & fhat2$estimate>ct2) 
-  intersect <- no.voxel*vol.voxel
-  return(intersect) }
-
-genLabel <- function(m, n, pilot) { # Generate label for KDE settings
-  return(paste("M",m,",N",n,",",pilot,sep="")) }
-
-genBounds <- function(data1, data2, if2D) { # Generate bounds for two volumes
-  data <- rbind(data1, data2)
-  mins <- c()
-  maxs <- c()
-  if(if2D) {
-    mins <- c(min(data$X), min(data$Y))
-    maxs <- c(max(data$X), max(data$Y)) }
-  else {
-    mins <- c(min(data$X), min(data$Y), min(data$Z))
-    maxs <- c(max(data$X), max(data$Y), max(data$Z)) }
-  bounds <- c(mins, maxs)
-  return(bounds) }
-
-KDETrialSingle <- function(data, if2D, percs, m, n, pilot, imgDir, colorSingle, opacitySingle, display2D) { # Tries KDE with given settings for single volumes
-  band <- Hpi(data, nstage=n, pilot=pilot)*m # Generate bandwidth matrix
-  fhat <- kde(data, H=band) # Generate KDE
-  if(typeof(fhat$x) == "list") { fhat$x  <- data.matrix(fhat$x) } # Convert data type to avoid sample size limit
-  
-  colorIndexOffset <- 0
-  
-  if(if2D) { # Create and save 2D plot
-    colorIndexOffset <- 1
-    imgName <- paste(imgDir,"/",genLabel(m,n,pilot),".png",sep="")
-    png(imgName)
-    print(paste("imgName", imgName, sep=" "))
-    plot(fhat, display=display2D, cont=percs, asp=1, col=colorSingle)
-    dev.off()
-  }
-  else { # Create and save 3D widget
-    imgName <- paste(imgDir,"/",genLabel(m,n,pilot),".html",sep="")
-    plot(fhat, display="rgl", cont=percs, asp=1, col=colorSingle, alpha=opacitySingle)
-    scene <- scene3d()
-    saveWidget(rglwidget(scene), file=imgName)
-    clear3d(type = "all")
-    rgl.close() }
-  vols <- vector()
-  
-  # Write color key to a file
-  color_key_file <- file(paste(imgDir, "/", "key.txt", sep=""))
-  reversed_percs <- rev(percs)
-  key_entries = c()
-  for(i in 1:length(percs)){
-    key_entries <- c(key_entries, paste(reversed_percs[i], "% Contour: ", colorSingle[i+colorIndexOffset]))
-  }
-  
-  writeLines(key_entries, color_key_file)
-  close(color_key_file)
-  
-  for(perc in percs) { vols <- append(vols, calcKernelVol(fhat,perc)) } # Store calculated volumes
-  return(vols) }
-
-
-KDETrialDouble <- function(data1, data2, if2D, percs, m, n, pilot, imgDir, colorDouble1, colorDouble2, opacityDouble1, opacityDouble2, display2D, name1, name2) { # Tries KDE with given settings for two volumes
-  band1 <- Hpi(data1, nstage=n, pilot=pilot)*m
-  band2 <- Hpi(data2, nstage=n, pilot=pilot)*m
-  bounds <- genBounds(data1, data2, if2D) # Generate outer bounds for KDE
-  dims <- 3
-  if(if2D) { dims <- 2 }
-  fhat1 <- kde(data1, H=band1, xmin=bounds[1:dims], xmax=bounds[(dims+1):(dims*2)])
-  if(typeof(fhat1$x) == "list") { fhat1$x  <- data.matrix(fhat1$x) }
-  fhat2 <- kde(data2, H=band2, xmin=bounds[1:dims], xmax=bounds[(dims+1):(dims*2)])
-  if(typeof(fhat2$x) == "list") { fhat2$x  <- data.matrix(fhat2$x) }
-  colorIndexOffset <- 0
-  # handle 3D
-  if(!if2D) {
-    imgName <- paste(imgDir,"/",genLabel(m,n,pilot),".html",sep="")
-    plot(fhat1, display="rgl", cont=percs, asp=1, col=colorDouble1, alpha=opacityDouble1)
-    plot(fhat2, display="rgl", cont=percs, asp=1, add=TRUE, col=colorDouble2, alpha=opacityDouble2)
-    scene <- scene3d()
-    saveWidget(rglwidget(scene), file=imgName)
-    
-    clear3d(type = "all")
-    rgl.close() }
-  # handle 2D
-  else{
-    colorIndexOffset <- 1
-    imgName <- paste(imgDir, "/", genLabel(m,n,pilot), ".png", sep="")
-    png(imgName)
-    plot(fhat1, display=display2D, cont=percs, asp=1, col=colorDouble1, alpha=0.5)
-    plot(fhat2, display=display2D, cont=percs, asp=1, add=TRUE, col=colorDouble2, alpha=0.5)
-    dev.off()
-  }
-  
-  color_key_file <- file(paste(imgDir, "/", "key.txt", sep=""))
-  reversed_percs <- rev(percs)
-  key_entries = c()
-  
-  for(i in 1:length(percs)){
-    key_entries <- c(key_entries, paste(name1, " ", reversed_percs[i], " % Contour: ", colorDouble1[i + colorIndexOffset]))
-    key_entries <- c(key_entries, paste(name2, " ", reversed_percs[i], " % Contour: ", colorDouble2[i + colorIndexOffset]))
-  }
-  
-  writeLines(key_entries, color_key_file)
-  close(color_key_file)
-  
-  vols <- vector()
-  for(perc in percs) {
-    vols <- append(vols, calcKernelVol(fhat1, perc))
-    vols <- append(vols, calcKernelVol(fhat2, perc))
-    vols <- append(vols, calcIntersect(fhat1, fhat2, perc)) }
-  return(vols) }
-
-KDESingle <- function(data, if2D, percs, ms, ns, pilots, imgDir, colorSingle, opacitySingle, display2D) { # Performs KDE for single volume with all combinations of settings
-  volumes <- data.frame(matrix(ncol=1+length(percs), nrow=0))
-  colnames(volumes) <- c("Label", paste(percs))
-  for(m in ms) { # Iterate through options for bandwidth optimization/selection
-    for(n in ns) {
-      for(pilot in pilots) {
-        vols <- KDETrialSingle(data, if2D, percs, m, n, pilot, imgDir, colorSingle, opacitySingle, display2D)
-        row <- data.frame(c(genLabel(m,n,pilot), as.list(vols))) # Construct row for output matrix
-        colnames(row) <- c("Label", paste(percs)) # Rename columns for merging
-        volumes <- rbind(volumes, row) }}}
-  return(volumes) }
-
-KDEDouble <- function(data1, data2, if2D, percs, ms, ns, pilots, imgDir, colorDouble1, colorDouble2, opacityDouble1, opacityDouble2, display2D, name1, name2) { # Performs KDE for two volumes with all combinations of settings
-  
-  volumes <- data.frame(matrix(ncol=1+3*length(percs), nrow=0))
-  prefixes <- c("V1", "V2", "V&")
-  colnames <- c(outer(prefixes, paste(percs), paste))
-  volnames <- c(outer(prefixes, paste(percs), paste))
-  colnames(volumes) <- c("Label", volnames)
-  for(m in ms) {
-    for(n in ns) {
-      for(pilot in pilots) {
-        vols <- KDETrialDouble(data1, data2, if2D, percs, m, n, pilot, imgDir, colorDouble1, colorDouble2, opacityDouble1, opacityDouble2, display2D, name1, name2)
-        row <- data.frame(c(genLabel(m,n,pilot), as.list(vols)))
-        colnames(row) <- c("Label", volnames)
-       #colnames(row) <- NA
-        volumes <- rbind(volumes, row) }}}
-  return(volumes) }
-
-prepData <- function(raw, name, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D) { # Transforms the data into a usable form
-  data <- raw[raw[nameCol] == name,] # Select only rows corresponding to desired animal
-  if(if2D) {
-    data <- select(data, xCol, yCol)
-    colnames(data) <- c("X", "Y") }
-  else {
-    data <- select(data, xCol, yCol, zCol) # Select coordinate columns as X,Y,Z
-    colnames(data) <- c("X", "Y", "Z") } # Rename columns to X,Y,Z
-  data <- na.omit(data) # Remove rows with missing data
-  # Adding noise here. runif(n, min, max) produces a uniform sample of size n between the values of min and max
-  if(ifNoise & !if2D) { data[,3] <- data[,3] + runif(nrow(data), -zIncr, 0) } # Add noise to Z
-  return(data) }
-
-run <- function(path, sheet, nameCol, xCol, yCol, zCol, dir, out_file, excluded, zIncr, ifNoise, ifSingle, ifDouble, if2D, percs, ms, ns, pilots, colorSingle, colorDouble1, colorDouble2, opacitySingle, opacityDouble1, opacityDouble2, display2D) { # Runs program
-  raw <- read_excel(path, sheet=sheet)
-  names <- unique(raw[nameCol]) # Get unique names for iterating
-  colnames(excluded) <- nameCol # Rename columns for processing
-  names <- anti_join(names, excluded, by=nameCol) # Remove excluded from names
-  if(! dir.exists(dir)) { dir.create(dir) }
-  # Add background color for 2D plots
-  if(if2D) {
-    colorSingle <- c("white", colorSingle)
-    colorDouble1 <- c("white", colorDouble1)
-    colorDouble2 <- c("white", colorDouble2)
-  }
-  if(ifSingle) {
-    total_out_file_single <- (paste(dir, "/Cumulative-Tables/output_total_single.csv", sep=""))
-    for(i in 1:nrow(names)) {
-      name <- as.character(names[i,])
-      data <- prepData(raw, name, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D) # Preprocess data
-      imgDir <- paste(dir,"/Single-Trial-Results/",name,sep="")
-      if(! dir.exists(imgDir)) { dir.create(imgDir) }
-      volumes <- KDESingle(data, if2D, percs, ms, ns, pilots, imgDir, colorSingle, opacitySingle, display2D) # Perform calculations
-      print(paste(name,":",sep="")) # Output results
-      print(volumes)
-      out_file_name = paste(dir, (paste("Single-Trial-Results/", name, "-", "output.csv", sep="")), sep="/")
-      write.table(volumes, out_file_name, row.names=TRUE, sep=", ", col.names=TRUE, quote=TRUE, na="NA")
-      write.table(volumes, total_out_file_single, row.names=TRUE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
-    }}
-  if(nrow(names) > 1 & ifDouble) {
-    total_out_file_double <- (paste(dir, "/Cumulative-Tables/output_total_double.csv", sep=""))
-    for(i in 1:(nrow(names)-1)) {
-      name1 <- as.character(names[i,])
-      data1 <- prepData(raw, name1, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D)
-      for(j in (i+1):nrow(names)) {
-        name2 <- as.character(names[j,])
-        data2 <- prepData(raw, name2, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D)
-        tag <- paste(name1,"&",name2)
-        imgDir <- paste(dir,"/Double-Trial-Results/",tag,sep="")
-        if(! dir.exists(imgDir)) { dir.create(imgDir) }
-        volumes <- KDEDouble(data1, data2, if2D, percs, ms, ns, pilots, imgDir, colorDouble1, colorDouble2, opacityDouble1, opacityDouble2, display2D, name1, name2)
-        print(paste(tag,":",sep=""))
-        print(volumes)
-        nameLabel <- paste(tag,":",sep="")
-        write.table("\n", total_out_file_double, row.names=FALSE, sep=", ", append = TRUE , col.names=FALSE, quote=FALSE, na="NA")
-        write.table(nameLabel, total_out_file_double, row.names=FALSE, sep=", ", append = TRUE , col.names=FALSE, quote=TRUE, na="NA")
-        write.table(volumes, total_out_file_double, row.names=FALSE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
-        out_file_name = paste(dir, "Double-Trial-Results", (paste(name1, name2, "output.csv", sep="-")), sep="/")
-        write.table(volumes, out_file_name, row.names=TRUE, sep=", ", col.names=TRUE, quote=TRUE, na="NA")
-      }}}}
-
-
-
-
-
-
+library(shinyWidgets)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
     # Application title
-  h1(id="big-heading", "Sezarc: KDE"),
-  tags$style(HTML("#big-heading{color: blue;}")),
+  div(
+    style = 
+      "height: 80px; background-color: cyan; width: 100%;",
+    tags$h1(
+      "Sezarc: KDE", 
+      style = 
+        "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+    )
+  ),
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
@@ -265,15 +57,249 @@ ui <- fluidPage(
         mainPanel(
           position = "right",
           width = 6,
+          progressBar(id = "pb", value = 0, total = 100, display_pct = T),
+          span(textOutput("KDEtext"), style="color:red"),
           actionButton("action1", "Run KDE"),
-          downloadLink("downloadData", "Click Here to Download KDE RESULTS"),
-          textOutput("KDEtext")
+          #Switched from downloadLink to download Button
+          downloadButton("downloadData", "Download KDE RESULTS"),
         )
     )
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  
+  #Functions all originally used in kde, stuffed into server
+  calcKernelVol <- function(fhat, perc) { # Calculates perc% kernel volume
+    ct <- contourLevels(fhat, cont=perc, approx=TRUE)
+    vol.voxel <- prod(sapply(fhat$eval.points, diff)[1,]) # Calculate volume of single voxel
+    no.voxel <- sum(fhat$estimate>ct) # Calculate number of voxels
+    vol <- no.voxel*vol.voxel # Calculate total volume as product
+    return(vol) }
+  
+  calcIntersect <- function(fhat1, fhat2, perc) { # Calculates volume of intersection of perc% volumes
+    ct1 <- contourLevels(fhat1, cont=perc, approx=TRUE) 
+    ct2 <- contourLevels(fhat2, cont=perc, approx=TRUE) 
+    vol.voxel <- prod(sapply(fhat1$eval.points, diff)[1,]) 
+    no.voxel <- sum(fhat1$estimate>ct1 & fhat2$estimate>ct2) 
+    intersect <- no.voxel*vol.voxel
+    return(intersect) }
+  
+  genLabel <- function(m, n, pilot) { # Generate label for KDE settings
+    return(paste("M",m,",N",n,",",pilot,sep="")) }
+  
+  genBounds <- function(data1, data2, if2D) { # Generate bounds for two volumes
+    data <- rbind(data1, data2)
+    mins <- c()
+    maxs <- c()
+    if(if2D) {
+      mins <- c(min(data$X), min(data$Y))
+      maxs <- c(max(data$X), max(data$Y)) }
+    else {
+      mins <- c(min(data$X), min(data$Y), min(data$Z))
+      maxs <- c(max(data$X), max(data$Y), max(data$Z)) }
+    bounds <- c(mins, maxs)
+    return(bounds) }
+  
+  KDETrialSingle <- function(data, if2D, percs, m, n, pilot, imgDir, colorSingle, opacitySingle, display2D) { # Tries KDE with given settings for single volumes
+    band <- Hpi(data, nstage=n, pilot=pilot)*m # Generate bandwidth matrix
+    fhat <- kde(data, H=band) # Generate KDE
+    if(typeof(fhat$x) == "list") { fhat$x  <- data.matrix(fhat$x) } # Convert data type to avoid sample size limit
+    
+    colorIndexOffset <- 0
+    
+    if(if2D) { # Create and save 2D plot
+      colorIndexOffset <- 1
+      imgName <- paste(imgDir,"/",genLabel(m,n,pilot),".png",sep="")
+      png(imgName)
+      print(paste("imgName", imgName, sep=" "))
+      plot(fhat, display=display2D, cont=percs, asp=1, col=colorSingle)
+      dev.off()
+    }
+    else { # Create and save 3D widget
+      imgName <- paste(imgDir,"/",genLabel(m,n,pilot),".html",sep="")
+      plot(fhat, display="rgl", cont=percs, asp=1, col=colorSingle, alpha=opacitySingle)
+      scene <- scene3d()
+      saveWidget(rglwidget(scene), file=imgName)
+      clear3d(type = "all")
+      rgl.close() }
+    vols <- vector()
+    
+    # Write color key to a file
+    color_key_file <- file(paste(imgDir, "/", "key.txt", sep=""))
+    reversed_percs <- rev(percs)
+    key_entries = c()
+    for(i in 1:length(percs)){
+      key_entries <- c(key_entries, paste(reversed_percs[i], "% Contour: ", colorSingle[i+colorIndexOffset]))
+    }
+    
+    writeLines(key_entries, color_key_file)
+    close(color_key_file)
+    
+    for(perc in percs) { vols <- append(vols, calcKernelVol(fhat,perc)) } # Store calculated volumes
+    return(vols) }
+  
+  KDETrialDouble <- function(data1, data2, if2D, percs, m, n, pilot, imgDir, colorDouble1, colorDouble2, opacityDouble1, opacityDouble2, display2D, name1, name2) { # Tries KDE with given settings for two volumes
+    band1 <- Hpi(data1, nstage=n, pilot=pilot)*m
+    band2 <- Hpi(data2, nstage=n, pilot=pilot)*m
+    bounds <- genBounds(data1, data2, if2D) # Generate outer bounds for KDE
+    dims <- 3
+    if(if2D) { dims <- 2 }
+    fhat1 <- kde(data1, H=band1, xmin=bounds[1:dims], xmax=bounds[(dims+1):(dims*2)])
+    if(typeof(fhat1$x) == "list") { fhat1$x  <- data.matrix(fhat1$x) }
+    fhat2 <- kde(data2, H=band2, xmin=bounds[1:dims], xmax=bounds[(dims+1):(dims*2)])
+    if(typeof(fhat2$x) == "list") { fhat2$x  <- data.matrix(fhat2$x) }
+    colorIndexOffset <- 0
+    # handle 3D
+    if(!if2D) {
+      imgName <- paste(imgDir,"/",genLabel(m,n,pilot),".html",sep="")
+      plot(fhat1, display="rgl", cont=percs, asp=1, col=colorDouble1, alpha=opacityDouble1)
+      plot(fhat2, display="rgl", cont=percs, asp=1, add=TRUE, col=colorDouble2, alpha=opacityDouble2)
+      scene <- scene3d()
+      saveWidget(rglwidget(scene), file=imgName)
+      
+      clear3d(type = "all")
+      rgl.close() }
+    # handle 2D
+    else{
+      colorIndexOffset <- 1
+      imgName <- paste(imgDir, "/", genLabel(m,n,pilot), ".png", sep="")
+      png(imgName)
+      plot(fhat1, display=display2D, cont=percs, asp=1, col=colorDouble1, alpha=0.5)
+      plot(fhat2, display=display2D, cont=percs, asp=1, add=TRUE, col=colorDouble2, alpha=0.5)
+      dev.off()
+    }
+    
+    color_key_file <- file(paste(imgDir, "/", "key.txt", sep=""))
+    reversed_percs <- rev(percs)
+    key_entries = c()
+    
+    for(i in 1:length(percs)){
+      key_entries <- c(key_entries, paste(name1, " ", reversed_percs[i], " % Contour: ", colorDouble1[i + colorIndexOffset]))
+      key_entries <- c(key_entries, paste(name2, " ", reversed_percs[i], " % Contour: ", colorDouble2[i + colorIndexOffset]))
+    }
+    
+    writeLines(key_entries, color_key_file)
+    close(color_key_file)
+    
+    vols <- vector()
+    for(perc in percs) {
+      vols <- append(vols, calcKernelVol(fhat1, perc))
+      vols <- append(vols, calcKernelVol(fhat2, perc))
+      vols <- append(vols, calcIntersect(fhat1, fhat2, perc)) }
+    return(vols) }
+  
+  KDESingle <- function(data, if2D, percs, ms, ns, pilots, imgDir, colorSingle, opacitySingle, display2D) { # Performs KDE for single volume with all combinations of settings
+    volumes <- data.frame(matrix(ncol=1+length(percs), nrow=0))
+    colnames(volumes) <- c("Label", paste(percs))
+    for(m in ms) { # Iterate through options for bandwidth optimization/selection
+      for(n in ns) {
+        for(pilot in pilots) {
+          vols <- KDETrialSingle(data, if2D, percs, m, n, pilot, imgDir, colorSingle, opacitySingle, display2D)
+          row <- data.frame(c(genLabel(m,n,pilot), as.list(vols))) # Construct row for output matrix
+          colnames(row) <- c("Label", paste(percs)) # Rename columns for merging
+          volumes <- rbind(volumes, row) }}}
+    return(volumes) }
+  
+  KDEDouble <- function(data1, data2, if2D, percs, ms, ns, pilots, imgDir, colorDouble1, colorDouble2, opacityDouble1, opacityDouble2, display2D, name1, name2) { # Performs KDE for two volumes with all combinations of settings
+    volumes <- data.frame(matrix(ncol=1+3*length(percs), nrow=0))
+    prefixes <- c("V1", "V2", "V&")
+    colnames <- c(outer(prefixes, paste(percs), paste))
+    volnames <- c(outer(prefixes, paste(percs), paste))
+    colnames(volumes) <- c("Label", volnames)
+    for(m in ms) {
+      for(n in ns) {
+        for(pilot in pilots) {
+          vols <- KDETrialDouble(data1, data2, if2D, percs, m, n, pilot, imgDir, colorDouble1, colorDouble2, opacityDouble1, opacityDouble2, display2D, name1, name2)
+          row <- data.frame(c(genLabel(m,n,pilot), as.list(vols)))
+          colnames(row) <- c("Label", volnames)
+          #colnames(row) <- NA
+          volumes <- rbind(volumes, row) }}}
+    return(volumes) }
+  
+  prepData <- function(raw, name, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D) { # Transforms the data into a usable form
+    data <- raw[raw[nameCol] == name,] # Select only rows corresponding to desired animal
+    if(if2D) {
+      data <- select(data, xCol, yCol)
+      colnames(data) <- c("X", "Y") }
+    else {
+      data <- select(data, xCol, yCol, zCol) # Select coordinate columns as X,Y,Z
+      colnames(data) <- c("X", "Y", "Z") } # Rename columns to X,Y,Z
+    data <- na.omit(data) # Remove rows with missing data
+    # Adding noise here. runif(n, min, max) produces a uniform sample of size n between the values of min and max
+    if(ifNoise & !if2D) { data[,3] <- data[,3] + runif(nrow(data), -zIncr, 0) } # Add noise to Z
+    return(data) }
+  
+  run <- function(path, sheet, nameCol, xCol, yCol, zCol, dir, out_file, excluded, zIncr, ifNoise, ifSingle, ifDouble, if2D, percs, ms, ns, pilots, colorSingle, colorDouble1, colorDouble2, opacitySingle, opacityDouble1, opacityDouble2, display2D) { # Runs program
+    raw <- read_excel(path, sheet=sheet)
+    names <- unique(raw[nameCol]) # Get unique names for iterating
+    colnames(excluded) <- nameCol # Rename columns for processing
+    names <- anti_join(names, excluded, by=nameCol) # Remove excluded from names
+    
+    totalRunsSingle <- nrow(names)
+    totalRunsDouble <- choose(nrow(names), 2)
+    oneRun <- 1
+    
+    if(ifSingle && ifDouble) {
+      totalRuns <- totalRunsSingle + totalRunsDouble
+    } else if (ifSingle) {
+      totalRuns <- totalRunsSingle
+    } else {
+      totalRuns <- totalRunsDouble
+    }
+    
+    if(! dir.exists(dir)) { dir.create(dir) }
+    # Add background color for 2D plots
+    if(if2D) {
+      colorSingle <- c("white", colorSingle)
+      colorDouble1 <- c("white", colorDouble1)
+      colorDouble2 <- c("white", colorDouble2)
+    }
+    if(ifSingle) {
+      total_out_file_single <- (paste(dir, "/Cumulative-Tables/output_total_single.csv", sep=""))
+      print(paste("total runs", totalRuns, sep = ": "))
+      print(oneRun)
+      for(i in 1:nrow(names)) {
+        name <- as.character(names[i,])
+        data <- prepData(raw, name, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D) # Preprocess data
+        imgDir <- paste(dir,"/Single-Trial-Results/",name,sep="")
+        if(! dir.exists(imgDir)) { dir.create(imgDir) }
+        volumes <- KDESingle(data, if2D, percs, ms, ns, pilots, imgDir, colorSingle, opacitySingle, display2D) # Perform calculations
+        print(paste(name,":",sep="")) # Output results
+        print(volumes)
+        out_file_name = paste(dir, (paste("Single-Trial-Results/", name, "-", "output.csv", sep="")), sep="/")
+        write.table(volumes, out_file_name, row.names=TRUE, sep=", ", col.names=TRUE, quote=TRUE, na="NA")
+        write.table(volumes, total_out_file_single, row.names=TRUE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
+        updateProgressBar(session = session, id = "pb", value = (oneRun/totalRuns) * 100)
+        oneRun <- oneRun + 1
+      }}
+    if(nrow(names) > 1 & ifDouble) {
+      total_out_file_double <- (paste(dir, "/Cumulative-Tables/output_total_double.csv", sep=""))
+      print(paste("total Runs", totalRuns, sep = ": "))
+      for(i in 1:(nrow(names)-1)) {
+        name1 <- as.character(names[i,])
+        data1 <- prepData(raw, name1, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D)
+        for(j in (i+1):nrow(names)) {
+          name2 <- as.character(names[j,])
+          data2 <- prepData(raw, name2, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D)
+          tag <- paste(name1,"&",name2)
+          imgDir <- paste(dir,"/Double-Trial-Results/",tag,sep="")
+          if(! dir.exists(imgDir)) { dir.create(imgDir) }
+          volumes <- KDEDouble(data1, data2, if2D, percs, ms, ns, pilots, imgDir, colorDouble1, colorDouble2, opacityDouble1, opacityDouble2, display2D, name1, name2)
+          print(paste(tag,":",sep=""))
+          print(volumes)
+          nameLabel <- paste(tag,":",sep="")
+          write.table("\n", total_out_file_double, row.names=FALSE, sep=", ", append = TRUE , col.names=FALSE, quote=FALSE, na="NA")
+          write.table(nameLabel, total_out_file_double, row.names=FALSE, sep=", ", append = TRUE , col.names=FALSE, quote=TRUE, na="NA")
+          write.table(volumes, total_out_file_double, row.names=FALSE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
+          out_file_name = paste(dir, "Double-Trial-Results", (paste(name1, name2, "output.csv", sep="-")), sep="/")
+          write.table(volumes, out_file_name, row.names=TRUE, sep=", ", col.names=TRUE, quote=TRUE, na="NA")
+          updateProgressBar(session = session, id = "pb", value = (oneRun/totalRuns) * 100)
+          oneRun <- oneRun + 1
+        }}}}
+  
+  
+  
   
   #Get Column Names from Excel sheet
   
@@ -489,7 +515,7 @@ server <- function(input, output, session) {
     
     #write.table(volumes, "C:/3DKDE/Output_from_Zoo/output_total_double.csv", row.names=TRUE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
     
-    
+    #Update progress bar currently is only accurate IF only double or single is checked, NOT BOTH
     
     run(path, sheet, nameCol, xCol, yCol, zCol, dir, out_file, excluded, zIncr, ifNoise, ifSingle, ifDouble, if2D, percs, ms, ns, pilots, colorSingle, colorDouble1, colorDouble2, opacitySingle, opacityDouble1, opacityDouble2, display2D)
     Zip_Files <- list.files(path = getwd(), pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
