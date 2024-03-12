@@ -353,7 +353,6 @@ server <- function(input, output, session) {
     req(input$file)
     sliderInput("stages_slider_server", "Number of Stages in Bandwidth Optimization", 1, 10, 1, 1)
   })
-  
   #Check boxes for bandwidth types
   output$samse <- renderUI({
     req(input$file)
@@ -423,8 +422,14 @@ server <- function(input, output, session) {
     #Dir path is not needed in shiny, because it will all be downloaded in the web from working directory
     #dir <- file.path(tempdir())
     #dir.create(dir)
-    dir <- getwd() 
     
+    #works with putting into dir <- getwd()
+    #dir <- getwd()
+    #dir <- tempdir()
+    setwd(tempdir())
+    dir <- getwd()
+    print(paste("wd is: ", getwd()))
+    print(paste("tempdir is :", dir))
     
     out_file <- paste(dir, "/output.csv", sep = "")
     print(out_file)
@@ -503,11 +508,12 @@ server <- function(input, output, session) {
     
     
     dir.create(file.path(getwd(), "Single-Trial-Results"))
-    
     dir.create(file.path(getwd(), "Double-Trial-Results"))
-    
     dir.create(file.path(getwd(), "Cumulative-Tables"))
     
+    #dir.create(file.path(dir, "Single-Trial-Results"))
+    #dir.create(file.path(dir, "Double-Trial-Results"))
+    #dir.create(file.path(dir, "Cumulative-Tables"))
     
     file.create("Cumulative-Tables/output_total_single.csv")
     #file.create(file.path(dir, "output_total_double.csv"))
@@ -522,7 +528,8 @@ server <- function(input, output, session) {
     #Update progress bar currently is only accurate IF only double or single is checked, NOT BOTH
     
     run(path, sheet, nameCol, xCol, yCol, zCol, dir, out_file, excluded, zIncr, ifNoise, ifSingle, ifDouble, if2D, percs, ms, ns, pilots, colorSingle, colorDouble1, colorDouble2, opacitySingle, opacityDouble1, opacityDouble2, display2D)
-    Zip_Files <- list.files(path = getwd(), pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
+    Zip_Files <- list.files(path = getwd(), pattern = ".csv$|.js$|.css$|samse.html$|unconstr.html$|dscalar.html$|dunconstr.html$", recursive = TRUE)
+    #Zip_Files <- list.files(path = dir, pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
     zip::zip(zipfile = "TestZip.zip", files = Zip_Files)
     print("Done Running KDE")
     updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = 100)
