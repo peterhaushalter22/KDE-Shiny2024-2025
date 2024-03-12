@@ -25,6 +25,7 @@ ui <- fluidPage(
         "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
     )
   ),
+  div(style = "height: 40px; background-color: white;"),
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
@@ -57,8 +58,7 @@ ui <- fluidPage(
         mainPanel(
           position = "right",
           width = 6,
-          progressBar(id = "pb", value = 0, total = 100, display_pct = T),
-          span(textOutput("KDEtext"), style="color:red"),
+          progressBar(id = "pb", value = 0, title = "KDE Progress:", display_pct = T, total = 100),
           actionButton("action1", "Run KDE"),
           #Switched from downloadLink to download Button
           downloadButton("downloadData", "Download KDE RESULTS"),
@@ -270,7 +270,11 @@ server <- function(input, output, session) {
         out_file_name = paste(dir, (paste("Single-Trial-Results/", name, "-", "output.csv", sep="")), sep="/")
         write.table(volumes, out_file_name, row.names=TRUE, sep=", ", col.names=TRUE, quote=TRUE, na="NA")
         write.table(volumes, total_out_file_single, row.names=TRUE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
-        updateProgressBar(session = session, id = "pb", value = (oneRun/totalRuns) * 100)
+        if (oneRun == totalRuns) {
+          updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = 99)
+        } else {
+          updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = (oneRun/totalRuns) * 100)
+        }
         oneRun <- oneRun + 1
       }}
     if(nrow(names) > 1 & ifDouble) {
@@ -294,7 +298,11 @@ server <- function(input, output, session) {
           write.table(volumes, total_out_file_double, row.names=FALSE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
           out_file_name = paste(dir, "Double-Trial-Results", (paste(name1, name2, "output.csv", sep="-")), sep="/")
           write.table(volumes, out_file_name, row.names=TRUE, sep=", ", col.names=TRUE, quote=TRUE, na="NA")
-          updateProgressBar(session = session, id = "pb", value = (oneRun/totalRuns) * 100)
+          if (oneRun == totalRuns) {
+            updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = 99)
+          } else { 
+            updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = (oneRun/totalRuns) * 100)
+          }
           oneRun <- oneRun + 1
         }}}}
   
@@ -308,8 +316,6 @@ server <- function(input, output, session) {
     #shinyDirChoose(input, 'folder', roots=serverVolumes, filetypes=c('', 'txt'))
   #})
   
-  text_to_display <- reactiveVal('KDE has not been run')
-  output$KDEtext = renderText({  text_to_display() })
   #updateTextInput(session, "KDEtext", value = "KDE has not been started")
   output$downloadData <- downloadHandler(
     filename = function() {
@@ -407,8 +413,6 @@ server <- function(input, output, session) {
   #Button to Run KDE
   observeEvent(input$action1, {
     
-    text_to_display <- reactiveVal('KDE is Running')
-    output$KDEtext = renderText({  text_to_display() })
     #updateTextInput(session, "KDEtext", value = "KDE is Running")
     
     req(input$file)
@@ -521,8 +525,7 @@ server <- function(input, output, session) {
     Zip_Files <- list.files(path = getwd(), pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
     zip::zip(zipfile = "TestZip.zip", files = Zip_Files)
     print("Done Running KDE")
-    text_to_display <- reactiveVal('KDE is Finished')
-    output$KDEtext = renderText({  text_to_display() })
+    updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = 100)
     #updateTextInput(session, "KDEtext", value = "KDE is Finished")
     
     })
