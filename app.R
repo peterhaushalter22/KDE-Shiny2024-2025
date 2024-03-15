@@ -34,23 +34,118 @@ ui <- fluidPage(
           width = 6,
           fileInput(inputId = "file", label = "Choose Excel file", multiple = TRUE),
           #shinyDirButton('folder', 'Click here to select a folder to hold the output files', 'Please select a folder', FALSE),
+          div(
+            style = 
+              "height: 10px;"),
+          div(
+            tags$h4(
+              "Column Selections",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          
           uiOutput("name_select"),
           uiOutput("x_select"),
           uiOutput("y_select"),
           uiOutput("z_select"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          div(
+            tags$h4(
+              "Bandwidth Stages",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          
           uiOutput("scaling_slider"),
           uiOutput("stages_slider"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          div(
+            tags$h4(
+              "Bandwidth Selections",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          
           uiOutput("samse"),
           uiOutput("unconstr"),
           uiOutput("dscalar"),
           uiOutput("dunconstr"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          div(
+            tags$h4(
+              "Optional Factors",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          
           uiOutput("twoD"),
           uiOutput("noise"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          div(
+            tags$h4(
+              "Required: Trial Types",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          
           uiOutput("single_trial"),
           uiOutput("double_trial"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          div(
+            tags$h4(
+              "Depth Selections",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          
           htmlOutput("min_max"),
           uiOutput("depth_sections"),
           uiOutput("enclosure_depth"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          div(
+            tags$h4(
+              "Contours",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          
           uiOutput("contours")
         ),
 
@@ -268,8 +363,9 @@ server <- function(input, output, session) {
         print(paste(name,":",sep="")) # Output results
         print(volumes)
         out_file_name = paste(dir, (paste("Single-Trial-Results/", name, "-", "output.csv", sep="")), sep="/")
+        write.table(name, total_out_file_single, row.names=FALSE, sep=", ", append = TRUE , col.names=FALSE, quote=TRUE, na="NA")
         write.table(volumes, out_file_name, row.names=TRUE, sep=", ", col.names=TRUE, quote=TRUE, na="NA")
-        write.table(volumes, total_out_file_single, row.names=TRUE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
+        write.table(volumes, total_out_file_single, row.names=FALSE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
         if (oneRun == totalRuns) {
           updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = 99)
         } else {
@@ -332,15 +428,15 @@ server <- function(input, output, session) {
   })
   output$x_select <- renderUI({
     req(input$file)
-    selectInput("x_col", "X Column", choices = colnames(read_excel(input$file$datapath)), label = "X Column")
+    selectInput("x_col", "X Column", choices = colnames(read_excel(input$file$datapath)), label = "Point X Column")
   })
   output$y_select <- renderUI({
     req(input$file)
-    selectInput("y_col", "Y Column", choices = colnames(read_excel(input$file$datapath)), label = "Y Column")
+    selectInput("y_col", "Y Column", choices = colnames(read_excel(input$file$datapath)), label = "Point Y Column")
   })
   output$z_select <- renderUI({
     req(input$file)
-    selectInput("z_col", "Z Column", choices = colnames(read_excel(input$file$datapath)), label = "Z Column")
+    selectInput("z_col", "Z Column", choices = colnames(read_excel(input$file$datapath)), label = "Point Z Column")
   })
   
   #Sliders for Scaling Factor and Stages in Bandwidth Stages
@@ -406,7 +502,7 @@ server <- function(input, output, session) {
   #Text input for contours
   output$contours <- renderUI({
     req(input$file)
-    textInput("contours_input", "Input Contours")
+    textInput("contours_input", "Input Contours", "50")
   })
   
   #Button to Run KDE
