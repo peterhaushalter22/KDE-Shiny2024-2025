@@ -12,6 +12,8 @@ library(shinyFiles)
 library(zip)
 library(shinyWidgets)
 
+#Remeber, x = long, y = lat
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
@@ -163,6 +165,12 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  #Don't need this IF I delete files at beginning each time
+  # session$onSessionEnded(function() { 
+  #   unlink(paste0(normalizePath(tempdir()), "/", dir(tempdir())), recursive = TRUE)
+  # })
+  
+  
   
   #Functions all originally used in kde, stuffed into server
   calcKernelVol <- function(fhat, perc) { # Calculates perc% kernel volume
@@ -419,6 +427,8 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       file.copy("TestZip.zip", file)
+      #unlink(paste0(normalizePath(tempdir()), "/", dir(tempdir())), recursive = TRUE)
+      #session$onSessionEnded(function() { file.remove(file.path(dir(pattern = ".csv"))) })
     }
   )
   
@@ -428,15 +438,15 @@ server <- function(input, output, session) {
   })
   output$x_select <- renderUI({
     req(input$file)
-    selectInput("x_col", "X Column", choices = colnames(read_excel(input$file$datapath)), label = "Point X Column")
+    selectInput("x_col", "X Column", choices = colnames(read_excel(input$file$datapath)), label = "X Column")
   })
   output$y_select <- renderUI({
     req(input$file)
-    selectInput("y_col", "Y Column", choices = colnames(read_excel(input$file$datapath)), label = "Point Y Column")
+    selectInput("y_col", "Y Column", choices = colnames(read_excel(input$file$datapath)), label = "Y Column")
   })
   output$z_select <- renderUI({
     req(input$file)
-    selectInput("z_col", "Z Column", choices = colnames(read_excel(input$file$datapath)), label = "Point Z Column")
+    selectInput("z_col", "Z Column", choices = colnames(read_excel(input$file$datapath)), label = "Z Column")
   })
   
   #Sliders for Scaling Factor and Stages in Bandwidth Stages
@@ -522,10 +532,24 @@ server <- function(input, output, session) {
     #works with putting into dir <- getwd()
     #dir <- getwd()
     #dir <- tempdir()
-    setwd(tempdir())
+    
+    tempFile <- input$file
+    #unlink(paste0(normalizePath(tempdir()), "/", dir(tempdir())), recursive = TRUE)
+    unlink(paste0(normalizePath(tempdir()), "/", "Cumulative-Tables"), recursive = TRUE)
+    unlink(paste0(normalizePath(tempdir()), "/", "Double-Trial-Results"), recursive = TRUE)
+    unlink(paste0(normalizePath(tempdir()), "/", "Single-Trial-Results"), recursive = TRUE)
+    print("below")
+    #print(paste0(normalizePath(tempdir()), "/", dir(tempdir())))
+    #input$file <- tempFile
+    #print("above")
+    tmp_dir <- tempdir()
+    setwd(tmp_dir)
     dir <- getwd()
     print(paste("wd is: ", getwd()))
     print(paste("tempdir is :", dir))
+    
+    #Reset progress bar to 0 for multiple runs
+    updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = 0)
     
     out_file <- paste(dir, "/output.csv", sep = "")
     print(out_file)
@@ -627,6 +651,14 @@ server <- function(input, output, session) {
     Zip_Files <- list.files(path = getwd(), pattern = ".csv$|.js$|.css$|samse.html$|unconstr.html$|dscalar.html$|dunconstr.html$", recursive = TRUE)
     #Zip_Files <- list.files(path = dir, pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
     zip::zip(zipfile = "TestZip.zip", files = Zip_Files)
+    
+    #For deleting old files still kept in the temp directory
+    #files <- list.files(tmp_dir, full.names = T, pattern = "^file")
+    #file.remove(tempFiles)
+    
+    #Don't delete here, deleting before files can be downloaded, duh
+    #unlink(paste0(normalizePath(tempdir()), "/", dir(tempdir())), recursive = TRUE)
+    
     print("Done Running KDE")
     updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = 100)
     #updateTextInput(session, "KDEtext", value = "KDE is Finished")
