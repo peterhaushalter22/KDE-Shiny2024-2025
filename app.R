@@ -14,6 +14,15 @@ library(shinyWidgets)
 
 #Remeber, x = long, y = lat
 
+COLORS = c("red","firebrick2", "orange", 
+           "brown","burlywood2", "tan3",
+           "yellow","gold","darkgoldenrod3",
+           "pink","deeppink", "bisque", 
+           "blue", "cyan","navy",
+           "green","darkgreen","lightgreen",
+           "purple","violet", "maroon",
+           "gray", "darkgray", "black")
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
@@ -148,9 +157,191 @@ ui <- fluidPage(
             )
           ),
           
-          uiOutput("contours")
+          uiOutput("contours"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          
+          div(
+            tags$h4(
+              "Contour Colors Animal 1:",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          #colors
+          uiOutput("animal1_color1"),
+          uiOutput("animal1_color2"),
+          uiOutput("animal1_color3"),
+          uiOutput("animal1_color4"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          
+          div(
+            tags$h4(
+              "Contour Colors Animal 2:",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          #colors
+          uiOutput("animal2_color1"),
+          uiOutput("animal2_color2"),
+          uiOutput("animal2_color3"),
+          uiOutput("animal2_color4"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )
+          ),
+          
+          div(
+            tags$h4(
+              "Color Legend",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          #tempvar <- COLORS[3],
+          div(
+            tags$span(
+              "red",
+              style = "font-size: 20px; color: red; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "firebrick2",
+              style = "font-size: 20px;color: rgb(238,44,44); position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+              tags$span(
+                "orange",
+                style = "font-size: 20px;color: orange; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+              ),
+          style = "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+          
+          div(
+            tags$span(
+              "brown",
+              style = "font-size: 20px;color: brown; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "burlywood2",
+              style = "font-size: 20px;color: rgb(238,197,145); position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "tan3",
+              style = "font-size: 20px;color: rgb(205,133,63); position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            style = "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+          ),
+          
+          div(
+            tags$span(
+              "yellow",
+              style = "font-size: 20px;color: yellow; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "gold",
+              style = "font-size: 20px;color: gold; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "goldenrod3",
+              style = "font-size: 20px;color: rgb(205,155,29); position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            style = "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+          ),
+          
+          div(
+            tags$span(
+              "pink",
+              style = "font-size: 20px;color: pink; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "deeppink",
+              style = "font-size: 20px;color: deeppink; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "bisque",
+              style = "font-size: 20px;color: bisque; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            style = "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+          ),
+          
+          div(
+            tags$span(
+              "blue",
+              style = "font-size: 20px;color: blue; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "cyan",
+              style = "font-size: 20px;color: cyan; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "navy",
+              style = "font-size: 20px;color: navy; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            style = "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+          ),
+          
+          div(
+            tags$span(
+              "green",
+              style = "font-size: 20px;color: green; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "darkgreen",
+              style = "font-size: 20px;color: darkgreen; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "lightgreen",
+              style = "font-size: 20px;color: lightgreen; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            style = "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+          ),
+          
+          
+          div(
+            tags$span(
+              "purple",
+              style = "font-size: 20px;color: purple; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "violet",
+              style = "font-size: 20px;color: violet; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "maroon",
+              style = "font-size: 20px;color: maroon; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            style = "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+          ),
+          
+          div(
+            tags$span(
+              "gray",
+              style = "font-size: 20px;color: gray; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "darkgray",
+              style = "font-size: 20px;color: darkgray; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            tags$span(
+              "black",
+              style = "font-size: 20px;color: black; position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            ),
+            style = "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+          ),
+          
         ),
-
+        
         # Show a plot of the generated distribution
         mainPanel(
           position = "right",
@@ -170,7 +361,14 @@ server <- function(input, output, session) {
   #   unlink(paste0(normalizePath(tempdir()), "/", dir(tempdir())), recursive = TRUE)
   # })
   
-  
+  COLORS = c("red","firebrick2", "orange", 
+             "brown","burlywood2", "tan3",
+             "yellow","gold","darkgoldenrod3",
+             "pink","deeppink", "bisque", 
+             "blue", "cyan","navy",
+             "green","darkgreen","lightgreen",
+             "purple","violet", "maroon",
+             "gray", "darkgray", "black")
   
   #Functions all originally used in kde, stuffed into server
   calcKernelVol <- function(fhat, perc) { # Calculates perc% kernel volume
@@ -262,6 +460,7 @@ server <- function(input, output, session) {
       saveWidget(rglwidget(scene), file=imgName)
       
       clear3d(type = "all")
+      
       rgl.close() }
     # handle 2D
     else{
@@ -515,6 +714,41 @@ server <- function(input, output, session) {
     textInput("contours_input", "Input Contours", "50")
   })
   
+  output$animal1_color1 <- renderUI({
+    req(input$file)
+    selectInput("a1c1", label = "Color 1", choices = COLORS, selected = "red") 
+  })
+  output$animal1_color2 <- renderUI({
+    req(input$file)
+    selectInput("a1c2", label = "Color 2", choices = COLORS, selected = "orange") 
+  })
+  output$animal1_color3 <- renderUI({
+    req(input$file)
+    selectInput("a1c3", label = "Color 3", choices = COLORS, selected = "yellow") 
+  })
+  output$animal1_color4 <- renderUI({
+    req(input$file)
+    selectInput("a1c4", label = "Color 4", choices = COLORS, selected = "pink") 
+  })
+  output$animal2_color1 <- renderUI({
+    req(input$file)
+    selectInput("a2c1", label = "Color 1", choices = COLORS, selected = "green")
+  })
+  output$animal2_color2 <- renderUI({
+    req(input$file)
+    selectInput("a2c2", label = "Color 2", choices = COLORS, selected = "blue")
+  })
+  output$animal2_color3 <- renderUI({
+    req(input$file)
+    selectInput("a2c3", label = "Color 3", choices = COLORS, selected = "cyan")
+  })
+  output$animal2_color4 <- renderUI({
+    req(input$file)
+    selectInput("a2c4", label = "Color 4", choices = COLORS, selected = "purple")
+  })
+  
+  
+  
   #Button to Run KDE
   observeEvent(input$action1, {
     
@@ -564,14 +798,37 @@ server <- function(input, output, session) {
     ifSingle <- input$single_trial_checkbox                                                  # Controls if the single-entity KDEs are done
     ifDouble <- input$double_trial_checkbox                                                   # Controls if the double-entity KDEs are done
     
+    #colorParams
     ## Display Parameters                                                 # Lengths should match length of percs
-    colorSingle <- c("red", "orange", "yellow", "pink", "purple")         # Colors for single-entity KDEs
-    colorDouble1 <- c("red", "orange", "yellow", "pink")                  # Colors for first entity of 3D double-entity KDEs
-    colorDouble2 <- c("green", "blue","cyan", "purple")                   # Colors for second entity of 3D double-entity KDEs
+    
+    #Color ordering is done first based on group, then the largest contour (biggest that covers the other one) takes the first color, the smaller
+    #contour on the inside takes the second color.
+    #colorSingle <- c("red", "orange", "yellow", "pink", "purple")         # Colors for single-entity KDEs
+    #colorDouble1 <- c("red", "orange", "yellow", "pink")                  # Colors for first entity of 3D double-entity KDEs
+    #colorDouble2 <- c("green", "blue","cyan", "purple")                   # Colors for second entity of 3D double-entity KDEs
+    
+    
+    #colorSingle <- c("yellow", "red", "orange", "purple")         # Colors for single-entity KDEs
+    #colorDouble1 <- c("yellow", "red", "orange", "purple")                       # Colors for first entity of 3D double-entity KDEs
+    #colorDouble2 <- c("blue","green", "cyan", "purple")
+    
+    colorSingle <- c(input$a1c1, input$a1c2, input$a1c3, input$a1c4)         # Colors for single-entity KDEs
+    colorDouble1 <- c(input$a1c1, input$a1c2, input$a1c3, input$a1c4)                 # Colors for first entity of 3D double-entity KDEs
+    colorDouble2 <- c(input$a2c1, input$a2c2,input$a2c3, input$a2c4) 
+    
     opacitySingle <- c(0.35, 1)                                           # Opacities for 3D single-entity KDEs
     opacityDouble1 <- c(0.25, 0.50, 0.95)                                 # Opacities for first entity of 3D double-entity KDEs
     opacityDouble2 <- c(0.25, 0.50, 0.95)                                 # Opacities for second entity of 3D double-entity KDEs
     display2D <- "filled.contour"                                         # Plot type for 2D (filled.contour, slice, persp, image)
+    
+    #Bad
+    #opacityDouble1 <- c(25, 50, 75)                                 # Opacities for first entity of 3D double-entity KDEs
+    #opacityDouble2 <- c(25, 50, 75) 
+    
+    #Changing the opacities doesn't really change anything with 2 contour double entity kde
+    #opacityDouble1 <- c(0.25, 0.50, 0.75)                                 # Opacities for first entity of 3D double-entity KDEs
+    #opacityDouble2 <- c(0.25, 0.50, 0.75) 
+    
     
     #moved args assignment to assignment or DIR for the python menu implementation
     #args = commandArgs(trailingOnly=TRUE)
