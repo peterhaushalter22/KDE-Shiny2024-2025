@@ -175,8 +175,8 @@ ui <- fluidPage(
           #colors
           uiOutput("animal1_color1"),
           uiOutput("animal1_color2"),
-          uiOutput("animal1_color3"),
-          uiOutput("animal1_color4"),
+          # uiOutput("animal1_color3"),
+          # uiOutput("animal1_color4"),
           
           div(tags$h4(
             style =
@@ -194,8 +194,8 @@ ui <- fluidPage(
           #colors
           uiOutput("animal2_color1"),
           uiOutput("animal2_color2"),
-          uiOutput("animal2_color3"),
-          uiOutput("animal2_color4"),
+          # uiOutput("animal2_color3"),
+          # uiOutput("animal2_color4"),
           
           div(tags$h4(
             style =
@@ -722,14 +722,14 @@ server <- function(input, output, session) {
     req(input$file)
     selectInput("a1c2", label = "Color 2", choices = COLORS, selected = "orange") 
   })
-  output$animal1_color3 <- renderUI({
-    req(input$file)
-    selectInput("a1c3", label = "Color 3", choices = COLORS, selected = "yellow") 
-  })
-  output$animal1_color4 <- renderUI({
-    req(input$file)
-    selectInput("a1c4", label = "Color 4", choices = COLORS, selected = "pink") 
-  })
+  # output$animal1_color3 <- renderUI({
+  #   req(input$file)
+  #   selectInput("a1c3", label = "Color 3", choices = COLORS, selected = "yellow") 
+  # })
+  # output$animal1_color4 <- renderUI({
+  #   req(input$file)
+  #   selectInput("a1c4", label = "Color 4", choices = COLORS, selected = "pink") 
+  # })
   output$animal2_color1 <- renderUI({
     req(input$file)
     selectInput("a2c1", label = "Color 1", choices = COLORS, selected = "green")
@@ -738,14 +738,15 @@ server <- function(input, output, session) {
     req(input$file)
     selectInput("a2c2", label = "Color 2", choices = COLORS, selected = "blue")
   })
-  output$animal2_color3 <- renderUI({
-    req(input$file)
-    selectInput("a2c3", label = "Color 3", choices = COLORS, selected = "cyan")
-  })
-  output$animal2_color4 <- renderUI({
-    req(input$file)
-    selectInput("a2c4", label = "Color 4", choices = COLORS, selected = "purple")
-  })
+  
+  # output$animal2_color3 <- renderUI({
+  #   req(input$file)
+  #   selectInput("a2c3", label = "Color 3", choices = COLORS, selected = "cyan")
+  # })
+  # output$animal2_color4 <- renderUI({
+  #   req(input$file)
+  #   selectInput("a2c4", label = "Color 4", choices = COLORS, selected = "purple")
+  # })
   
   
   
@@ -814,10 +815,11 @@ server <- function(input, output, session) {
     
     
     #Apparently you will never need more than 2 colors
+    #Switching the colors
     
-    colorSingle <- c(input$a1c1, input$a1c2, input$a1c3, input$a1c4)         # Colors for single-entity KDEs
-    colorDouble1 <- c(input$a1c1, input$a1c2, input$a1c3, input$a1c4)                 # Colors for first entity of 3D double-entity KDEs
-    colorDouble2 <- c(input$a2c1, input$a2c2,input$a2c3, input$a2c4) 
+    colorSingle <- c(input$a1c1, input$a1c2, 'yellow', "pink")                  # Colors for single-entity KDEs
+    colorDouble1 <- c(input$a1c1, input$a1c2, "yellow", "pink")                 # Colors for first entity of 3D double-entity KDEs
+    colorDouble2 <- c(input$a2c1, input$a2c2, "cyan", "purple") 
     
     #original = .25, .50, .95
     opacitySingle <- c(0.35, 1)                                           # Opacities for 3D single-entity KDEs
