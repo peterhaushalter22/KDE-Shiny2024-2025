@@ -812,10 +812,14 @@ server <- function(input, output, session) {
     #colorDouble1 <- c("yellow", "red", "orange", "purple")                       # Colors for first entity of 3D double-entity KDEs
     #colorDouble2 <- c("blue","green", "cyan", "purple")
     
+    
+    #Apparently you will never need more than 2 colors
+    
     colorSingle <- c(input$a1c1, input$a1c2, input$a1c3, input$a1c4)         # Colors for single-entity KDEs
     colorDouble1 <- c(input$a1c1, input$a1c2, input$a1c3, input$a1c4)                 # Colors for first entity of 3D double-entity KDEs
     colorDouble2 <- c(input$a2c1, input$a2c2,input$a2c3, input$a2c4) 
     
+    #original = .25, .50, .95
     opacitySingle <- c(0.35, 1)                                           # Opacities for 3D single-entity KDEs
     opacityDouble1 <- c(0.25, 0.50, 0.95)                                 # Opacities for first entity of 3D double-entity KDEs
     opacityDouble2 <- c(0.25, 0.50, 0.95)                                 # Opacities for second entity of 3D double-entity KDEs
@@ -905,7 +909,7 @@ server <- function(input, output, session) {
     #Update progress bar currently is only accurate IF only double or single is checked, NOT BOTH
     
     run(path, sheet, nameCol, xCol, yCol, zCol, dir, out_file, excluded, zIncr, ifNoise, ifSingle, ifDouble, if2D, percs, ms, ns, pilots, colorSingle, colorDouble1, colorDouble2, opacitySingle, opacityDouble1, opacityDouble2, display2D)
-    Zip_Files <- list.files(path = getwd(), pattern = ".csv$|.js$|.css$|samse.html$|unconstr.html$|dscalar.html$|dunconstr.html$", recursive = TRUE)
+    Zip_Files <- list.files(path = getwd(), pattern = ".txt$|.csv$|.js$|.css$|samse.html$|unconstr.html$|dscalar.html$|dunconstr.html$", recursive = TRUE)
     #Zip_Files <- list.files(path = dir, pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
     zip::zip(zipfile = "TestZip.zip", files = Zip_Files)
     
