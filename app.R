@@ -26,7 +26,7 @@ COLORS = c("red","firebrick2", "orange",
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
-    # Application title
+  # Application title, centered
   div(
     style = 
       "height: 80px; background-color: cyan; width: 100%;",
@@ -36,13 +36,17 @@ ui <- fluidPage(
         "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
     )
   ),
+  #Spacing
   div(style = "height: 40px; background-color: white;"),
 
-    # Sidebar with a slider input for number of bins 
+  #Side bar for all the input elements, including drop downs, text inputs, and sliders  
+  
     sidebarLayout(
+        #Beginning of side bar panel
         sidebarPanel(
           position = "left",
           width = 6,
+          #File input selection
           fileInput(inputId = "file", label = "Choose Excel file", multiple = TRUE),
           #shinyDirButton('folder', 'Click here to select a folder to hold the output files', 'Please select a folder', FALSE),
           div(
@@ -56,11 +60,13 @@ ui <- fluidPage(
             )
           ),
           
+          #UI outputs, correspond to a dropdown that selects from the spreadsheet columns
           uiOutput("name_select"),
           uiOutput("x_select"),
           uiOutput("y_select"),
           uiOutput("z_select"),
           
+          #Adds a solid line between UI elements using html
           div(tags$h4(
             style =
               "border-top: 1px solid #000000; height: 10px;"
@@ -74,6 +80,7 @@ ui <- fluidPage(
             )
           ),
           
+          #UI outputs that correspond to slider elements 
           uiOutput("scaling_slider"),
           uiOutput("stages_slider"),
           
@@ -90,6 +97,7 @@ ui <- fluidPage(
             )
           ),
           
+          #UI outputs that correspond to checkboxes for the different bandwidth pilots
           uiOutput("samse"),
           uiOutput("unconstr"),
           uiOutput("dscalar"),
@@ -108,6 +116,7 @@ ui <- fluidPage(
             )
           ),
           
+          #UI outputs that correspond to checkboxes for 2D and Noise
           uiOutput("twoD"),
           uiOutput("noise"),
           
@@ -124,6 +133,7 @@ ui <- fluidPage(
             )
           ),
           
+          #UI outputs that correspond to checkboxes for what type of 3D KDE output you want, single entity or two entities
           uiOutput("single_trial"),
           uiOutput("double_trial"),
           
@@ -140,6 +150,8 @@ ui <- fluidPage(
             )
           ),
           
+          #UI outputs that correspond to text inputs for depth and enclosure depth
+          #Also an html element that tells you the min and max you can enter (unsure if actually implemented)
           htmlOutput("min_max"),
           uiOutput("depth_sections"),
           uiOutput("enclosure_depth"),
@@ -157,6 +169,7 @@ ui <- fluidPage(
             )
           ),
           
+          #UI outputs that correspond to a text input for contours, one string, comma separated numbers, no spaces
           uiOutput("contours"),
           
           div(tags$h4(
@@ -173,6 +186,7 @@ ui <- fluidPage(
             )
           ),
           #colors
+          #UI outputs that correspond to drop down selections for contour colors for animal 1
           uiOutput("animal1_color1"),
           uiOutput("animal1_color2"),
           # uiOutput("animal1_color3"),
@@ -192,6 +206,7 @@ ui <- fluidPage(
             )
           ),
           #colors
+          #UI outputs that correspond to drop down selections for contour colors for animal 2
           uiOutput("animal2_color1"),
           uiOutput("animal2_color2"),
           # uiOutput("animal2_color3"),
@@ -203,6 +218,8 @@ ui <- fluidPage(
           )
           ),
           
+          
+          #Legend for the colors, displaying the color each color string will actually look like on the plot
           div(
             tags$h4(
               "Color Legend",
@@ -342,11 +359,13 @@ ui <- fluidPage(
           
         ),
         
-        # Show a plot of the generated distribution
+        # Main panel, where the KDE run and download buttons are, as well as the progress bar
         mainPanel(
           position = "right",
           width = 6,
+          #Progress bar
           progressBar(id = "pb", value = 0, title = "KDE Progress:", display_pct = T, total = 100),
+          #Run button
           actionButton("action1", "Run KDE"),
           #Switched from downloadLink to download Button
           downloadButton("downloadData", "Download KDE RESULTS"),
@@ -354,13 +373,9 @@ ui <- fluidPage(
     )
 )
 
-# Define server logic required to draw a histogram
+# Server functions, where the calculations are actually handled as well as the backend for the UI buttons
 server <- function(input, output, session) {
-  #Don't need this IF I delete files at beginning each time
-  # session$onSessionEnded(function() { 
-  #   unlink(paste0(normalizePath(tempdir()), "/", dir(tempdir())), recursive = TRUE)
-  # })
-  
+  #List of colors used
   COLORS = c("red","firebrick2", "orange", 
              "brown","burlywood2", "tan3",
              "yellow","gold","darkgoldenrod3",
@@ -370,6 +385,7 @@ server <- function(input, output, session) {
              "purple","violet", "maroon",
              "gray", "darkgray", "black")
   
+  #Server level functions used for calculating the KDE
   #Functions all originally used in kde, stuffed into server
   calcKernelVol <- function(fhat, perc) { # Calculates perc% kernel volume
     ct <- contourLevels(fhat, cont=perc, approx=TRUE)
@@ -619,7 +635,7 @@ server <- function(input, output, session) {
     #shinyDirChoose(input, 'folder', roots=serverVolumes, filetypes=c('', 'txt'))
   #})
   
-  #updateTextInput(session, "KDEtext", value = "KDE has not been started")
+  #Download handler on the server side 
   output$downloadData <- downloadHandler(
     filename = function() {
       paste("KDE-Data-", Sys.Date(), ".zip", sep="")
@@ -631,18 +647,23 @@ server <- function(input, output, session) {
     }
   )
   
+  # "choices = " Reads the excel for the colnames
+  #Select dropdown for the name column
   output$name_select <- renderUI({
     req(input$file)
     selectInput("name_col", "Name Column", choices = colnames(read_excel(input$file$datapath)), label = "Name Column") 
   })
+  #Select dropdown for the X column
   output$x_select <- renderUI({
     req(input$file)
     selectInput("x_col", "X Column", choices = colnames(read_excel(input$file$datapath)), label = "X Column")
   })
+  #Select dropdown for the Y column
   output$y_select <- renderUI({
     req(input$file)
     selectInput("y_col", "Y Column", choices = colnames(read_excel(input$file$datapath)), label = "Y Column")
   })
+  #Select dropdown for the Z column
   output$z_select <- renderUI({
     req(input$file)
     selectInput("z_col", "Z Column", choices = colnames(read_excel(input$file$datapath)), label = "Z Column")
@@ -650,14 +671,17 @@ server <- function(input, output, session) {
   
   #Sliders for Scaling Factor and Stages in Bandwidth Stages
   
+  #Slider for the bandwidth scaling
   output$scaling_slider <- renderUI({
     req(input$file)
     sliderInput("scaling_slider_server", "Scaling Factor (m)", 1, 10, 1, 1)
   })
+  #Slider for the bandwidth stages scaling
   output$stages_slider <- renderUI({
     req(input$file)
     sliderInput("stages_slider_server", "Number of Stages in Bandwidth Optimization", 1, 10, 1, 1)
   })
+  
   #Check boxes for bandwidth types
   output$samse <- renderUI({
     req(input$file)
@@ -693,7 +717,6 @@ server <- function(input, output, session) {
   })
   
   #Number inputs
-  
   output$min_max <- renderText({
     req(input$file)
     HTML('Mininmum Value: 1, Maximum value: 1000')
@@ -714,6 +737,7 @@ server <- function(input, output, session) {
     textInput("contours_input", "Input Contours", "50")
   })
   
+  #Dropdown for animal 1 colors
   output$animal1_color1 <- renderUI({
     req(input$file)
     selectInput("a1c1", label = "Color 1", choices = COLORS, selected = "red") 
@@ -730,6 +754,7 @@ server <- function(input, output, session) {
   #   req(input$file)
   #   selectInput("a1c4", label = "Color 4", choices = COLORS, selected = "pink") 
   # })
+  #Dropdown for animal 2 colors
   output$animal2_color1 <- renderUI({
     req(input$file)
     selectInput("a2c1", label = "Color 1", choices = COLORS, selected = "green")
@@ -768,6 +793,7 @@ server <- function(input, output, session) {
     #dir <- getwd()
     #dir <- tempdir()
     
+    #This bit of code erases the temp files that are stored in a temporary directory at the beginning of each run
     tempFile <- input$file
     #unlink(paste0(normalizePath(tempdir()), "/", dir(tempdir())), recursive = TRUE)
     unlink(paste0(normalizePath(tempdir()), "/", "Cumulative-Tables"), recursive = TRUE)
@@ -777,6 +803,8 @@ server <- function(input, output, session) {
     #print(paste0(normalizePath(tempdir()), "/", dir(tempdir())))
     #input$file <- tempFile
     #print("above")
+    
+    #Make the directory a  temp directory, set it do the current/work directory
     tmp_dir <- tempdir()
     setwd(tmp_dir)
     dir <- getwd()
@@ -793,9 +821,13 @@ server <- function(input, output, session) {
     # dir <- file.choose()
     excluded <- data.frame(c("Calibration"))                              # Names to be excluded
     #zIncr <- 5.18134715 - 3.454231434                                     # Increment in Z for adding noise
+    
+    #Stores the noise input into a new variable
     ifNoise <- input$noise_checkbox   
     #Change later
     # Controls if there is noise added
+    
+    #Stores the double and single inputs into a new variable
     ifSingle <- input$single_trial_checkbox                                                  # Controls if the single-entity KDEs are done
     ifDouble <- input$double_trial_checkbox                                                   # Controls if the double-entity KDEs are done
     
@@ -817,29 +849,22 @@ server <- function(input, output, session) {
     #Apparently you will never need more than 2 colors
     #Switching the colors
     
+    #Nancy said for the majority of cases  you'll only need 2 colors, these are just the back up incase it's ever more (the yellow and pink)
     colorSingle <- c(input$a1c1, input$a1c2, 'yellow', "pink")                  # Colors for single-entity KDEs
     colorDouble1 <- c(input$a1c1, input$a1c2, "yellow", "pink")                 # Colors for first entity of 3D double-entity KDEs
     colorDouble2 <- c(input$a2c1, input$a2c2, "cyan", "purple") 
     
     #original = .25, .50, .95
+    #Opacity values for how colors stack up on each other
     opacitySingle <- c(0.35, 1)                                           # Opacities for 3D single-entity KDEs
     opacityDouble1 <- c(0.25, 0.50, 0.95)                                 # Opacities for first entity of 3D double-entity KDEs
     opacityDouble2 <- c(0.25, 0.50, 0.95)                                 # Opacities for second entity of 3D double-entity KDEs
     display2D <- "filled.contour"                                         # Plot type for 2D (filled.contour, slice, persp, image)
     
-    #Bad
-    #opacityDouble1 <- c(25, 50, 75)                                 # Opacities for first entity of 3D double-entity KDEs
-    #opacityDouble2 <- c(25, 50, 75) 
-    
-    #Changing the opacities doesn't really change anything with 2 contour double entity kde
-    #opacityDouble1 <- c(0.25, 0.50, 0.75)                                 # Opacities for first entity of 3D double-entity KDEs
-    #opacityDouble2 <- c(0.25, 0.50, 0.75) 
-    
-    
-    #moved args assignment to assignment or DIR for the python menu implementation
-    #args = commandArgs(trailingOnly=TRUE)
-    
     # Set static args
+    
+    
+    #Storing each respective input into new variables before calling the function
     path <- input$file$datapath
     if2D <- input$twoD_checkbox
     nameCol <- input$name_col
@@ -857,6 +882,8 @@ server <- function(input, output, session) {
     depth_sections <-  input$depth_sections_input
     
     # Set contours (percs)
+    
+    #Parses the contours string and stores it in percs variable as a list
     percsString <- input$contours_input
     percsList <- as.list(strsplit(percsString, ",")[[1]])
     percs <- lapply(percsList, function(x) as.integer(x))
@@ -867,9 +894,11 @@ server <- function(input, output, session) {
     # The range of the bottom section is not included, so we subtract 1 from section count
     # when finding heights of individual sections below
     
+    #ZIncr is calculated with depth/depth sections
     zIncr <- enclosure_depth / depth_sections
     print(zIncr)
     
+    #Stores each pilot continuously depending on how many you select
     pilots <- c()
     if(samse){
       pilots <- c(pilots, "samse")
@@ -889,7 +918,7 @@ server <- function(input, output, session) {
     
     #file.create(paste(dir, "/output_total_single.csv", sep=""))
     
-    
+    #Creating the folders the file will be stored in
     dir.create(file.path(getwd(), "Single-Trial-Results"))
     dir.create(file.path(getwd(), "Double-Trial-Results"))
     dir.create(file.path(getwd(), "Cumulative-Tables"))
@@ -898,21 +927,26 @@ server <- function(input, output, session) {
     #dir.create(file.path(dir, "Double-Trial-Results"))
     #dir.create(file.path(dir, "Cumulative-Tables"))
     
+    #Creating both total output csvs, which aggregate the data together instead of having it in separate files
     file.create("Cumulative-Tables/output_total_single.csv")
     #file.create(file.path(dir, "output_total_double.csv"))
     file.create("Cumulative-Tables/output_total_double.csv")
+    
+    #Storing the volumes before run, so it can access it without it being in a for loop, since the total tables only need to write it once (at the top of the file)
     volumes <- data.frame(matrix(ncol=1+3*length(percs), nrow=0))
     prefixes <- c("V1", "V2", "V&")
     volnames <- c(outer(prefixes, paste(percs), paste))
     colnames(volumes) <- c("Label", volnames)
     
     #write.table(volumes, "C:/3DKDE/Output_from_Zoo/output_total_double.csv", row.names=TRUE, sep=", ", append = TRUE , col.names=TRUE, quote=TRUE, na="NA")
-    
-    #Update progress bar currently is only accurate IF only double or single is checked, NOT BOTH
-    
+
+    #Calling the run function which is the one actually doing the KDE calculations
     run(path, sheet, nameCol, xCol, yCol, zCol, dir, out_file, excluded, zIncr, ifNoise, ifSingle, ifDouble, if2D, percs, ms, ns, pilots, colorSingle, colorDouble1, colorDouble2, opacitySingle, opacityDouble1, opacityDouble2, display2D)
+    #Lists the files and stores each one ending in one of the specified patterns as a list in Zip_Files
     Zip_Files <- list.files(path = getwd(), pattern = ".txt$|.csv$|.js$|.css$|samse.html$|unconstr.html$|dscalar.html$|dunconstr.html$", recursive = TRUE)
     #Zip_Files <- list.files(path = dir, pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
+    
+    #Zips all the files listed in Zip_Files and stores it in TestZip.zip
     zip::zip(zipfile = "TestZip.zip", files = Zip_Files)
     
     #For deleting old files still kept in the temp directory
@@ -923,6 +957,8 @@ server <- function(input, output, session) {
     #unlink(paste0(normalizePath(tempdir()), "/", dir(tempdir())), recursive = TRUE)
     
     print("Done Running KDE")
+    
+    #Update the progress bar to 100, KDE is done running 
     updateProgressBar(session = session, id = "pb", title = "KDE Progress:", value = 100)
     #updateTextInput(session, "KDEtext", value = "KDE is Finished")
     
@@ -935,6 +971,6 @@ server <- function(input, output, session) {
 
 
 
-# Run the application 
+# Run the application with stack trace on, to see more detailed error messages
 options(shiny.fullstacktrace=TRUE)
 shinyApp(ui = ui, server = server)
