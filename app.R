@@ -650,7 +650,7 @@ server <- function(input, output, session) {
   
   output$sheet_select <- renderUI({
     req(input$file)
-    selectInput("sheet_col", "Sheet Column", choices = excel_sheets(input$file$datapath), label = "Sheet Column") 
+    selectInput("sheet_col", "Sheet Column", choices = excel_sheets(input$file$datapath), label = "Sheet Name") 
   })
   
   # "choices = " Reads the excel for the colnames
