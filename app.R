@@ -61,6 +61,7 @@ ui <- fluidPage(
           ),
           
           #UI outputs, correspond to a dropdown that selects from the spreadsheet columns
+          uiOutput("sheet_select"),
           uiOutput("name_select"),
           uiOutput("x_select"),
           uiOutput("y_select"),
@@ -647,6 +648,11 @@ server <- function(input, output, session) {
     }
   )
   
+  output$sheet_select <- renderUI({
+    req(input$file)
+    selectInput("sheet_col", "Sheet Column", choices = excel_sheets(input$file$datapath), label = "Sheet Column") 
+  })
+  
   # "choices = " Reads the excel for the colnames
   #Select dropdown for the name column
   output$name_select <- renderUI({
@@ -783,7 +789,7 @@ server <- function(input, output, session) {
     req(input$file)
     print(input$file$datapath)
     options(stringsAsFactors = FALSE)
-    sheet <- 1  
+    sheet <- input$sheet_col
     
     #Dir path is not needed in shiny, because it will all be downloaded in the web from working directory
     #dir <- file.path(tempdir())
