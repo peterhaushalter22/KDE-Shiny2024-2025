@@ -49,9 +49,26 @@ ui <- fluidPage(
           #File input selection
           fileInput(inputId = "file", label = "Choose Excel file", multiple = TRUE),
           #shinyDirButton('folder', 'Click here to select a folder to hold the output files', 'Please select a folder', FALSE),
+          
           div(
             style = 
               "height: 10px;"),
+          div(
+            tags$h4(
+              "Required Factors",
+              style =
+                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
+            )
+          ),
+          
+          #UI outputs that correspond to checkboxes for 2D and Noise
+          uiOutput("twoD"),
+          uiOutput("noise"),
+          
+          div(tags$h4(
+            style =
+              "border-top: 1px solid #000000; height: 10px;"
+          )),
           div(
             tags$h4(
               "Column Selections",
@@ -103,23 +120,6 @@ ui <- fluidPage(
           uiOutput("unconstr"),
           uiOutput("dscalar"),
           uiOutput("dunconstr"),
-          
-          div(tags$h4(
-            style =
-              "border-top: 1px solid #000000; height: 10px;"
-          )
-          ),
-          div(
-            tags$h4(
-              "Optional Factors",
-              style =
-                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
-            )
-          ),
-          
-          #UI outputs that correspond to checkboxes for 2D and Noise
-          uiOutput("twoD"),
-          uiOutput("noise"),
           
           div(tags$h4(
             style =
@@ -672,6 +672,10 @@ server <- function(input, output, session) {
   #Select dropdown for the Z column
   output$z_select <- renderUI({
     req(input$file)
+    
+    #This statement is required before checking any values of checkboxes, or else it will fail because null at the beginning
+    req(!is.null(input$twoD_checkbox))
+    req(!(input$twoD_checkbox))
     selectInput("z_col", "Z Column", choices = colnames(read_excel(input$file$datapath)), label = "Z Column")
   })
   
@@ -707,19 +711,21 @@ server <- function(input, output, session) {
   })
   output$twoD <- renderUI({
     req(input$file)
-    checkboxInput("twoD_checkbox", "Is Data 2D?", value = FALSE)
+    checkboxInput("twoD_checkbox", "Check if Data is 2D", value = FALSE)
   })
   output$noise <- renderUI({
     req(input$file)
-    checkboxInput("noise_checkbox", "Add Noise?", value = FALSE)
+    req(!is.null(input$twoD_checkbox))
+    req(!(input$twoD_checkbox))
+    checkboxInput("noise_checkbox", "Check to Add Noise to 3D Data", value = FALSE)
   })
   output$single_trial <- renderUI({
     req(input$file)
-    checkboxInput("single_trial_checkbox", "Incorporate Single Trial Results?", value = FALSE)
+    checkboxInput("single_trial_checkbox", "Incorporate Single Entity Results?", value = FALSE)
   })
   output$double_trial <- renderUI({
     req(input$file)
-    checkboxInput("double_trial_checkbox", "Incorporate Double Trial Results?", value = FALSE)
+    checkboxInput("double_trial_checkbox", "Incorporate Paired Results?", value = FALSE)
   })
   
   #Number inputs
@@ -949,7 +955,7 @@ server <- function(input, output, session) {
     #Calling the run function which is the one actually doing the KDE calculations
     run(path, sheet, nameCol, xCol, yCol, zCol, dir, out_file, excluded, zIncr, ifNoise, ifSingle, ifDouble, if2D, percs, ms, ns, pilots, colorSingle, colorDouble1, colorDouble2, opacitySingle, opacityDouble1, opacityDouble2, display2D)
     #Lists the files and stores each one ending in one of the specified patterns as a list in Zip_Files
-    Zip_Files <- list.files(path = getwd(), pattern = ".txt$|.csv$|.js$|.css$|samse.html$|unconstr.html$|dscalar.html$|dunconstr.html$", recursive = TRUE)
+    Zip_Files <- list.files(path = getwd(), pattern = ".png$|.txt$|.csv$|.js$|.css$|samse.html$|unconstr.html$|dscalar.html$|dunconstr.html$", recursive = TRUE)
     #Zip_Files <- list.files(path = dir, pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
     
     #Zips all the files listed in Zip_Files and stores it in TestZip.zip
