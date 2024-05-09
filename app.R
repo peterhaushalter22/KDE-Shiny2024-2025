@@ -64,6 +64,8 @@ ui <- fluidPage(
           #UI outputs that correspond to checkboxes for 2D and Noise
           uiOutput("twoD"),
           uiOutput("noise"),
+          uiOutput("single_trial"),
+          uiOutput("double_trial"),
           
           div(tags$h4(
             style =
@@ -120,23 +122,6 @@ ui <- fluidPage(
           uiOutput("unconstr"),
           uiOutput("dscalar"),
           uiOutput("dunconstr"),
-          
-          div(tags$h4(
-            style =
-              "border-top: 1px solid #000000; height: 10px;"
-          )
-          ),
-          div(
-            tags$h4(
-              "Required: Trial Types",
-              style =
-                "position: relative; text-align:center; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); padding-right: 10px; padding-left: 10px;"
-            )
-          ),
-          
-          #UI outputs that correspond to checkboxes for what type of 3D KDE output you want, single entity or two entities
-          uiOutput("single_trial"),
-          uiOutput("double_trial"),
           
           div(tags$h4(
             style =
@@ -674,6 +659,7 @@ server <- function(input, output, session) {
     req(input$file)
     
     #This statement is required before checking any values of checkboxes, or else it will fail because null at the beginning
+    req(input$file)
     req(!is.null(input$twoD_checkbox))
     req(!(input$twoD_checkbox))
     selectInput("z_col", "Z Column", choices = colnames(read_excel(input$file$datapath)), label = "Z Column")
@@ -731,15 +717,21 @@ server <- function(input, output, session) {
   #Number inputs
   output$min_max <- renderText({
     req(input$file)
+    req(!is.null(input$twoD_checkbox))
+    req(!(input$twoD_checkbox))
     HTML('Mininmum Value: 1, Maximum value: 1000')
   })
   
   output$depth_sections <- renderUI({
     req(input$file)
+    req(!is.null(input$twoD_checkbox))
+    req(!(input$twoD_checkbox))
     numericInput("depth_sections_input", "Number of Depth Sections", 1, 1, 1000, 1)
   })
   output$enclosure_depth <- renderUI({
     req(input$file)
+    req(!is.null(input$twoD_checkbox))
+    req(!(input$twoD_checkbox))
     numericInput("enclosure_depth_input", "Enclosure Depth in Meters", 1, 1, 1000, 1)
   })
   
@@ -769,10 +761,14 @@ server <- function(input, output, session) {
   #Dropdown for animal 2 colors
   output$animal2_color1 <- renderUI({
     req(input$file)
+    req(!is.null(input$double_trial_checkbox))
+    req((input$double_trial_checkbox))
     selectInput("a2c1", label = "Color 1", choices = COLORS, selected = "green")
   })
   output$animal2_color2 <- renderUI({
     req(input$file)
+    req(!is.null(input$double_trial_checkbox))
+    req((input$double_trial_checkbox))
     selectInput("a2c2", label = "Color 2", choices = COLORS, selected = "blue")
   })
   
