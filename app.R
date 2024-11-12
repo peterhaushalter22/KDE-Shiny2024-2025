@@ -954,6 +954,45 @@ server <- function(input, output, session) {
     Zip_Files <- list.files(path = getwd(), pattern = ".png$|.txt$|.csv$|.js$|.css$|samse.html$|unconstr.html$|dscalar.html$|dunconstr.html$", recursive = TRUE)
     #Zip_Files <- list.files(path = dir, pattern = ".csv$|.js$|.css$|.html$", recursive = TRUE)
     
+    file.create("parameters.txt")
+    fileConn<-file("parameters.txt")
+    parameters <- c(
+      paste("File:", input$file$name, sep=" "),
+      paste("Sheet Name:", sheet, sep=" "),
+      paste("Name Col:", nameCol, sep=" "),
+      paste("X Column:", xCol, sep=" "),
+      paste("Y Column:", yCol, sep=" "),
+      paste("Z Column:", zCol, sep=" "),
+      paste(""),
+      paste("2D Data:", if2D, sep=" "),
+      paste("Noise Added:", ifNoise, sep=" "),
+      paste("Single Results:", ifSingle, sep=" "),
+      paste("Paired Results:", ifDouble, sep=" "),
+      paste(""),
+      paste("Scaling Factor (m):", input$scaling_slider_server, sep=" "),
+      paste("Stages in Bandwidth Optimization:", input$stages_slider_server, sep=" "),
+      paste(""),
+      paste("Samse:", input$samse_checkbox, sep=" "),
+      paste("Unconstr:", input$unconstr_checkbox, sep=" "),
+      paste("Dscalar:", input$dscalar_checkbox, sep=" "),
+      paste("Dunconstr:", input$dunconstr_checkbox, sep=" "),
+      paste(""),
+      paste("Depth Sections:", depth_sections, sep=" "),
+      paste("Enclosure Depth (m):", enclosure_depth, sep=" "),
+      paste(""),
+      paste("Contours:", input$contours_input, sep=" "),
+      paste(""),
+      paste("Animal 1 Color 1:", input$a1c1, sep=" "),
+      paste("Animal 1 Color 2:", input$a1c2, sep=" "),
+      paste("Animal 2 Color 1:", input$a2c1, sep=" "),
+      paste("Animal 2 Color 2:", input$a2c2, sep=" ")
+    )
+    writeLines(parameters, fileConn)
+    close(fileConn)
+    
+    #Zip_Files <- append(Zip_Files, "parameters.txt")
+    
+    
     #Zips all the files listed in Zip_Files and stores it in TestZip.zip
     zip::zip(zipfile = "TestZip.zip", files = Zip_Files)
     
