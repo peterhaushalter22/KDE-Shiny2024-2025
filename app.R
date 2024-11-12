@@ -624,7 +624,7 @@ server <- function(input, output, session) {
   #Download handler on the server side 
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste("KDE-Data-", Sys.Date(), ".zip", sep="")
+      paste("KDE-Data-", format(Sys.time(), "%d-%m-%Y(%H-%M-%S)"), ".zip", sep="")
     },
     content = function(file) {
       file.copy("TestZip.zip", file)
