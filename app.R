@@ -536,7 +536,8 @@ server <- function(input, output, session) {
   
   run <- function(path, sheet, nameCol, xCol, yCol, zCol, dir, out_file, excluded, zIncr, ifNoise, ifSingle, ifDouble, if2D, percs, ms, ns, pilots, colorSingle, colorDouble1, colorDouble2, opacitySingle, opacityDouble1, opacityDouble2, display2D) { # Runs program
     raw <- read_excel(path, sheet=sheet)
-    names <- unique(raw[nameCol]) # Get unique names for iterating
+    names <- unique(raw[nameCol]) # Get unique names for iterating 
+    names[[nameCol]] <- as.character(names[[nameCol]]) # as character so as not to read numeric names as numeric data type
     colnames(excluded) <- nameCol # Rename columns for processing
     names <- anti_join(names, excluded, by=nameCol) # Remove excluded from names
     
@@ -621,10 +622,20 @@ server <- function(input, output, session) {
     #shinyDirChoose(input, 'folder', roots=serverVolumes, filetypes=c('', 'txt'))
   #})
   
+  #Dynamic file namer to use input in filename for readablility 
+  filenamer <- reactive({
+    if (!is.null(input$file)) {
+      input_name = gsub(" ", "", tools::file_path_sans_ext(input$file$name))
+      paste0(input_name, "-KDE-Data-", format(Sys.time(), "%d-%m-%Y(%H-%M-%S)"), ".zip")
+    } else {
+      paste0("KDE-Data-", format(Sys.time(), "%d-%m-%Y(%H-%M-%S)"), ".zip")
+    }
+  })
+  
   #Download handler on the server side 
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste("KDE-Data-", format(Sys.time(), "%d-%m-%Y(%H-%M-%S)"), ".zip", sep="")
+      filenamer()
     },
     content = function(file) {
       file.copy("TestZip.zip", file)
