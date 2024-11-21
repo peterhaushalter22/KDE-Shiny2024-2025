@@ -405,6 +405,10 @@ server <- function(input, output, session) {
     return(bounds) }
   
   KDETrialSingle <- function(data, if2D, percs, m, n, pilot, imgDir, colorSingle, opacitySingle, display2D) { # Tries KDE with given settings for single volumes
+    print("single trial")
+    print(data)
+    print(paste("n=", n, " : m=", m))
+    print(pilot)
     band <- Hpi(data, nstage=n, pilot=pilot)*m # Generate bandwidth matrix
     fhat <- kde(data, H=band) # Generate KDE
     if(typeof(fhat$x) == "list") { fhat$x  <- data.matrix(fhat$x) } # Convert data type to avoid sample size limit
@@ -541,6 +545,36 @@ server <- function(input, output, session) {
     colnames(excluded) <- nameCol # Rename columns for processing
     names <- anti_join(names, excluded, by=nameCol) # Remove excluded from names
     
+    print(names)
+    
+    # remove any names without enough data points and warn if below recommended
+    tmp_names <- names # iterate over a tmp df since we are modifying names inside the loop
+    minSample <- if(if2D) 2 else 6
+    recSample <- if(if2D) 20 else 67 # values taken from random stack exchange reference I found: 'Bernard. W. Silverman, CRC ,1986'
+    minWarnings <- list()
+    recWarnings <- list()
+    for (name in tmp_names[[nameCol]]) {
+      num <- length(which(raw[[nameCol]] == name))
+      if (num < minSample) {
+        print(
+          paste0("Warning: ", name ," removed because it did not have enough data points (", num, ") [Minimum: ", minSample, "]")
+        )
+        append(minWarnings, paste0("Warning: ", name ," removed because it did not have enough data points (", num, ") [Minimum: ", minSample, "]"))
+        names <- names[names[[nameCol]] != name, ] # remove that name
+      }
+      else if (num < recSample) {
+        print(
+          paste0("Warning: ", name ," has less than the reccomended number of data points (", num, ") [Reccomended: ", recSample, "]")
+        )
+      }
+    }
+    
+    print("warnings:")
+    for (warning in minWarnings) {
+      print(warning)
+    }
+    print(names)
+    
     totalRunsSingle <- nrow(names)
     totalRunsDouble <- choose(nrow(names), 2)
     oneRun <- 1
@@ -566,6 +600,7 @@ server <- function(input, output, session) {
       print(oneRun)
       for(i in 1:nrow(names)) {
         name <- as.character(names[i,])
+        cat(paste("\nanimal ", name, "\n")) # print for tests
         data <- prepData(raw, name, nameCol, xCol, yCol, zCol, zIncr, ifNoise, if2D) # Preprocess data
         imgDir <- paste(dir,"/Single-Trial-Results/",name,sep="")
         if(! dir.exists(imgDir)) { dir.create(imgDir) }
